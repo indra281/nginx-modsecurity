@@ -1,7 +1,7 @@
 # nginx-module-sticky
 
-- nginx sticky dynamic module
-- Load Blancing Session Persistence Method by Cookie
+- nginx modsecurity dynamic module
+
 
 ## How to build
 
