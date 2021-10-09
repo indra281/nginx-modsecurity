@@ -11,7 +11,7 @@ rpm -Uvh https://nginx.org/packages/centos/7/SRPMS/nginx-1.20.1-1.el7.ngx.src.rp
 git clone https://github.com/indra281/nginx-modsecurity.git
 cd nginx-modsecurity
 rpmbuild -ba nginx-module-modsecurity.spec
-sudo yum localupdate /path/to/nginx-module-sticky-1.18.0-2.el7.ngx.x86_64.rpm
+
 ```
 
 *See Also
