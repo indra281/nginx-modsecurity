@@ -12,9 +12,8 @@ Requires(preun): systemd
 Requires(postun): systemd
 %endif
 
-%if 0%{?rhel} || 0%{?amzn}
+%if 0%{?rhel}
 %define _group System Environment/Daemons
-BuildRequires: openssl-devel
 %endif
 
 %if 0%{?rhel} == 6
@@ -26,15 +25,14 @@ BuildRequires: openssl-devel >= 1.0.1
 %endif
 
 %if 0%{?rhel} == 7
-BuildRequires: redhat-lsb-core
 %define epoch 1
 Epoch: %{epoch}
-%define os_minor %(lsb_release -rs | cut -d '.' -f 2)
-%if %{os_minor} == 4
-%define dist .el7_4
-%else
+Requires(pre): shadow-utils
+Requires: openssl >= 1.0.2
+BuildRequires: openssl-devel >= 1.0.2
+BuildRequires: libuuid-devel
 %define dist .el7
-%endif
+%define debug_package %{nil}
 %endif
 
 %if 0%{?rhel} == 8
@@ -47,26 +45,39 @@ BuildRequires: openssl-devel >= 1.1.1
 
 %if 0%{?suse_version} >= 1315
 %define _group Productivity/Networking/Web/Servers
+%define nginx_loggroup trusted
+Requires(pre): shadow
 BuildRequires: libopenssl-devel
+%define _debugsource_template %{nil}
 %endif
 
-BuildRequires: expat-devel
-BuildRequires: git
+# end of distribution specific definitions
 
-%define base_version 1.18.0
-%define base_release 2%{?dist}.ngx
+BuildRequires: curl gcc gcc-c++
+
+%define base_version 1.20.0
+%define base_release 1%{?dist}.ngx
+%define pagespeed_version 1.13.35.2
 
 %define bdir %{_builddir}/%{name}-%{base_version}
 
-Summary: nginx sticky dynamic module
-Name: nginx-module-sticky
+%define WITH_CC_OPT $(echo %{optflags} $(pcre-config --cflags))
+%define WITH_LD_OPT -Wl,-z,relro -Wl,-z,now
+
+%define BASE_CONFIGURE_ARGS $(echo "--prefix=%{_sysconfdir}/nginx --sbin-path=%{_sbindir}/nginx --modules-path=%{_libdir}/nginx/modules --conf-path=%{_sysconfdir}/nginx/nginx.conf --error-log-path=%{_localstatedir}/log/nginx/error.log --http-log-path=%{_localstatedir}/log/nginx/access.log --pid-path=%{_localstatedir}/run/nginx.pid --lock-path=%{_localstatedir}/run/nginx.lock --http-client-body-temp-path=%{_localstatedir}/cache/nginx/client_temp --http-proxy-temp-path=%{_localstatedir}/cache/nginx/proxy_temp --http-fastcgi-temp-path=%{_localstatedir}/cache/nginx/fastcgi_temp --http-uwsgi-temp-path=%{_localstatedir}/cache/nginx/uwsgi_temp --http-scgi-temp-path=%{_localstatedir}/cache/nginx/scgi_temp --user=%{nginx_user} --group=%{nginx_group} --with-compat --with-file-aio --with-threads --with-http_addition_module --with-http_auth_request_module --with-http_dav_module --with-http_flv_module --with-http_gunzip_module --with-http_gzip_static_module --with-http_mp4_module --with-http_random_index_module --with-http_realip_module --with-http_secure_link_module --with-http_slice_module --with-http_ssl_module --with-http_stub_status_module --with-http_sub_module --with-http_v2_module --with-mail --with-mail_ssl_module --with-stream --with-stream_realip_module --with-stream_ssl_module --with-stream_ssl_preread_module")
+%define MODULE_NAME ngx_pagespeed-latest-stable
+%define MODULE_CONFIGURE_ARGS $(echo "--add-dynamic-module=%{bdir}/%{MODULE_NAME}")
+
+Summary: nginx pagespeed dynamic module
+Name: nginx-module-pagespeed
 Version: %{base_version}
-Release: %{base_release}
+Release: 1%{?dist}.ngx
 Vendor: Nginx, Inc.
 URL: http://nginx.org/
 Group: %{_group}
 
 Source0: http://nginx.org/download/nginx-%{base_version}.tar.gz
+Source1: nginx.copyright
 
 License: 2-clause BSD-like license
 
@@ -76,60 +87,37 @@ BuildRequires: pcre-devel
 Requires: nginx == %{?epoch:%{epoch}:}%{base_version}-%{base_release}
 
 %description
-nginx sticky dynamic module.
+ngx_pagespeed-%{pagespeed_version} dynamic module for nginx-%{base_version}-%{base_release}
 
-%if 0%{?suse_version} || 0%{?amzn}
+%if 0%{?suse_version} || 0%{?amzn} 
 %debug_package
 %endif
 
-%define WITH_CC_OPT $(echo %{optflags} $(pcre-config --cflags))
-%define WITH_LD_OPT -Wl,-z,relro -Wl,-z,now
-
-%define BASE_CONFIGURE_ARGS $(echo "--prefix=%{_sysconfdir}/nginx --sbin-path=%{_sbindir}/nginx --modules-path=%{_libdir}/nginx/modules --conf-path=%{_sysconfdir}/nginx/nginx.conf --error-log-path=%{_localstatedir}/log/nginx/error.log --http-log-path=%{_localstatedir}/log/nginx/access.log --pid-path=%{_localstatedir}/run/nginx.pid --lock-path=%{_localstatedir}/run/nginx.lock --http-client-body-temp-path=%{_localstatedir}/cache/nginx/client_temp --http-proxy-temp-path=%{_localstatedir}/cache/nginx/proxy_temp --http-fastcgi-temp-path=%{_localstatedir}/cache/nginx/fastcgi_temp --http-uwsgi-temp-path=%{_localstatedir}/cache/nginx/uwsgi_temp --http-scgi-temp-path=%{_localstatedir}/cache/nginx/scgi_temp --user=%{nginx_user} --group=%{nginx_group} --with-compat --with-file-aio --with-threads --with-http_addition_module --with-http_auth_request_module --with-http_dav_module --with-http_flv_module --with-http_gunzip_module --with-http_gzip_static_module --with-http_mp4_module --with-http_random_index_module --with-http_realip_module --with-http_secure_link_module --with-http_slice_module --with-http_ssl_module --with-http_stub_status_module --with-http_sub_module --with-http_v2_module --with-mail --with-mail_ssl_module --with-stream --with-stream_realip_module --with-stream_ssl_module --with-stream_ssl_preread_module")
-%define MODULE_CONFIGURE_ARGS $(echo "--add-dynamic-module=%{bdir}/nginx-sticky-module-ng")
-
 %prep
 %setup -qcTn %{name}-%{base_version}
-tar --strip-components=1 -zxf %{SOURCE0}
-git clone https://bitbucket.org/nginx-goodies/nginx-sticky-module-ng.git
-cat <<EOF > nginx-sticky-module-ng/config
-# OVERWITE NEW STYLE CONFIG
-# This file is base on https://bitbucket.org/nginx-goodies/nginx-sticky-module-ng/issues/25/converting-the-config-file-for-dynamic
-ngx_addon_name=ngx_http_sticky_module
-if test -n "\$ngx_module_link"; then
-    ngx_module_type=HTTP
-    ngx_module_name=ngx_http_sticky_module
-    ngx_module_srcs="\$ngx_addon_dir/ngx_http_sticky_module.c \$ngx_addon_dir/ngx_http_sticky_misc.c"
-    ngx_module_deps="\$ngx_addon_dir/ngx_http_sticky_misc.h"
-    . auto/module
-else
-    HTTP_MODULES="\$HTTP_MODULES ngx_http_sticky_module"
-    NGX_ADDON_SRCS="\$NGX_ADDON_SRCS \$ngx_addon_dir/ngx_http_sticky_module.c \$ngx_addon_dir/ngx_http_sticky_misc.c"
-    NGX_ADDON_DEPS="\$NGX_ADDON_DEPS \$ngx_addon_dir/ngx_http_sticky_misc.h"
-fi
-EOF
+tar --strip-components=1 -xzf %{SOURCE0}
+mkdir %{bdir}/%{MODULE_NAME}
+cd %{bdir}/%{MODULE_NAME}
+
+git clone --depth 1 https://github.com/SpiderLabs/ModSecurity-nginx.git
+
 
 
 %build
 
 cd %{bdir}
+
 ./configure %{BASE_CONFIGURE_ARGS} %{MODULE_CONFIGURE_ARGS} \
-	--with-cc-opt="%{WITH_CC_OPT}" \
-	--with-ld-opt="%{WITH_LD_OPT}" \
-	--with-debug
-make %{?_smp_mflags} modules
-for so in `find %{bdir}/objs/ -type f -name "*.so"`; do
-debugso=`echo $so | sed -e "s|.so|-debug.so|"`
-mv $so $debugso
-done
-./configure %{BASE_CONFIGURE_ARGS} %{MODULE_CONFIGURE_ARGS} \
-	--with-cc-opt="%{WITH_CC_OPT}" \
-	--with-ld-opt="%{WITH_LD_OPT}"
+    --with-cc-opt="%{WITH_CC_OPT}" \
+    --with-ld-opt="%{WITH_LD_OPT}"
 make %{?_smp_mflags} modules
 
 %install
 cd %{bdir}
 %{__rm} -rf $RPM_BUILD_ROOT
+%{__mkdir} -p $RPM_BUILD_ROOT%{_datadir}/doc/%{name}-%{base_version}
+%{__install} -m 644 -p %{SOURCE1} \
+    $RPM_BUILD_ROOT%{_datadir}/doc/%{name}-%{base_version}/COPYRIGHT
 
 %{__mkdir} -p $RPM_BUILD_ROOT%{_libdir}/nginx/modules
 for so in `find %{bdir}/objs/ -maxdepth 1 -type f -name "*.so"`; do
@@ -143,48 +131,55 @@ done
 %files
 %defattr(-,root,root)
 %{_libdir}/nginx/modules/*
-
+%dir %{_datadir}/doc/%{name}-%{base_version}
+%{_datadir}/doc/%{name}-%{base_version}/*
 
 %post
 if [ $1 -eq 1 ]; then
 cat <<BANNER
 ----------------------------------------------------------------------
-
-The sticky dynamic module for nginx has been installed.
+The pagespeed dynamic module for nginx has been installed.
 To enable this module, add the following to /etc/nginx/nginx.conf
 and reload nginx:
-
-    load_module modules/ngx_http_sticky_module.so;
-
+    load_module modules/ngx_pagespeed.so;
 Please refer to the module documentation for further details:
-https://bitbucket.org/nginx-goodies/nginx-sticky-module-ng/
-
+https://www.modpagespeed.com/doc/build_ngx_pagespeed_from_source
 ----------------------------------------------------------------------
 BANNER
 fi
 
 %changelog
-* Wed Nov 25 2020 Shigechika AIKAWA
-- sync w/ nginx-1.18.0-2 rpm.
+* Thu May 13 2021 Shigechika AIKAWA
+- sync w/ nginx-1.20.0 and pagespeed-1.13.35.2-stable.
 
-* Fri May 22 2020 Shigechika AIKAWA
-- sync w/ nginx-1.18.0.
+* Fri Nov 20 2020 Shigechika AIKAWA
+- sync w/ nginx-1.18.0-2 and pagespeed-1.13.35.2-stable.
+
+* Tue Apr 28 2020 Shigechika AIKAWA
+- sync w/ nginx-1.18.0 and pagespeed-1.13.35.2-stable.
 
 * Thu Aug 22 2019 Shigechika AIKAWA
-- sync w/ nginx-1.16.1
+- sync w/ nginx-1.16.1 and pagespeed-1.13.35.2-stable.
 
-* Thu Jun 27 2019 Shigechika AIKAWA
-- base version updated to 1.16.0
+* Tue May 07 2019 Shigechika AIKAWA
+- sync w/ nginx-1.16.0 and pagespeed-1.13.35.2-stable.
 
 * Wed Dec 05 2018 Shigechika AIKAWA
-- base version updated to 1.14.2
+- sync w/ nginx-1.14.2 and pagespeed-1.13.35.2-stable.
 
-* Tue Nov 13 2018 Shigechika AIKAWA
-- base version updated to nginx-1.14.1.
+* Wed Nov 07 2018 Shigechika AIKAWA
+- sync w/ nginx-1.14.1 and pagespeed-1.13.35.2-stable.
 
 * Mon May 07 2018 Shigechika AIKAWA
-- base version updated to nginx-1.14.0.
+- sync w/ nginx-1.14.0 and pagespeed-1.13.35.2-stable.
 
-* Mon Oct 23 2017 Shigechika AIKAWA
-- base on nginx-1.12.2
+* Sat Feb 10 2018 Shigechika AIKAWA
+- sync w/ nginx-1.12.2 and pagespeed-1.13.35.2-stable.
+- automatic download ngx_pagespeed source and psol (binary) library.
+
+* Sun Oct 22 2017 Shigechika AIKAWA
+- base on nginx-1.12.2 and pagespeed-1.12.34.3-stable.
+
+* Fri Oct 13 2017 Shigechika AIKAWA
+- base on nginx-1.12.1 and pagespeed-1.12.34.2-stable.
 - referenced nginx module spec files.

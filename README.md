@@ -1,25 +1,18 @@
-# nginx-module-sticky
-
-- nginx modsecurity dynamic module
-
-
-## How to build
-
-```
+nginx-module-pagespeed
+This package use with nginx.org yum repository.
+Pagespeed Dynamic Module
+Currently supports CentOS7 only
+Automatic download PSOL(PageSpeed Optimization Libraries) stable version
+How to build
 rpmdev-setuptree
-rpm -Uvh https://nginx.org/packages/centos/7/SRPMS/nginx-1.20.1-1.el7.ngx.src.rpm
-git clone https://github.com/indra281/nginx-modsecurity.git
-cd nginx-modsecurity
-rpmbuild -ba nginx-module-modsecurity.spec
-
-```
-
-*See Also
-
-- [Converting the config file for dynamic module](https://bitbucket.org/nginx-goodies/nginx-sticky-module-ng/issues/25/converting-the-config-file-for-dynamic)
-- https://bitbucket.org/LeMovieStoreGuy/nginx-sticky-module-ng
-- https://github.com/shigechika/nginx-module-pagespeed
-
-## NO WARRANTY
-
-Good Luck :-)
+rpm -Uvh https://nginx.org/packages/centos/7/SRPMS/nginx-1.20.0-1.el7.ngx.src.rpm
+git clone https://github.com/shigechika/nginx-module-pagespeed.git
+rpmbuild -ba nginx-module-pagespeed/nginx-module-pagespeed.spec
+sudo yum localupdate rpmbuild/RPMS/x86_64/nginx-module-pagespeed-1.20.0-1.el7.ngx.x86_64.rpm
+Workaround
+If you stopped at rpmdev-setuptree...
+sudo yum install rpmdevtools
+If you stopped at rpmbuild...
+sudo yum install openssl-devel libuuid-devel gcc gcc-c++
+NO WARRANTY
+Good LUCK :-)
